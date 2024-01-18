@@ -15,6 +15,11 @@ Welcome to the 500 Beginner Python Projects repository! This repository is open 
 
 Each project is organized in its own directory and contains a README.md file with project details and instructions. Check out [README TEMPLATE](./README_TEMPLATE.md) your project.
 
+## Projects
+  
+| SL | Project Name                                                                                  | Project Description                                |  Author                                    |
+|----|-----------------------------------------------------------------------------------------------|----------------------------------------------------|--------------------------------------------|
+| 01 | [Dice Roller](https://github.com/404mahdi/500-beginner-python-projects/tree/main/dice-roller) | A simple random dice roller                        | [404mahdi](https://github.com/404mahdi)    |
 ## Guidelines
 
 - Make sure to follow the project guidelines and requirements specified in each project's README.md file.
