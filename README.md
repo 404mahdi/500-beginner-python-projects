@@ -6,8 +6,8 @@ Welcome to the 500 Beginner Python Projects repository! This repository is open 
 
 1. Fork the repository.
 2. Clone the forked repository to your local machine.
-3. Choose a project from the list and create a new branch.
-4. Implement the project using Python.
+3. Create a new branch.
+4. Implement your project using Python.
 5. Commit and push your changes to your forked repository.
 6. Create a pull request to submit your project for review.
 
