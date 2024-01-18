@@ -1,36 +1,26 @@
-# A Random Dice Roller
+# Dice Roller
+<p align='center'><img src="https://github.com/404mahdi/500-beginner-python-projects/assets/119351159/9652069e-30c3-4883-ae94-aa4f13c3251f" height=300px></p>
+
 
 ## 🛠️ Description
 
-<!--Remove the below lines and add yours -->
+This is a random dice roller.
 
-A short description about the script must be mentioned here.
+## 💻 Frameworks Used
 
-## 💻 Languages or Frameworks Used
+Modules used: Tkinter, random
 
-<!--Remove the below lines and add yours -->
-
-Modules required to be able to use the script successfully
-and how to install them.
-(If there are a lot of them, including a `requirements.txt` file will work better.)
 
 ## 🌟 How to run
 
-<!--Remove the below lines and add yours -->
-
-Steps on how to run the script.
-
-`python tic-tac-toe.py`
+Go to the directory. <br>
+run `python dice-roller.py`
+Note: dice.ico should be in the same directory.
 
 ## 📺 Demo
 
-<!--Remove the below lines and add yours -->
-
-Add a Screenshot/GIF showing the sample use of your project (jpeg/png/gif).
+![Untitled video - Made with Clipchamp](https://github.com/404mahdi/500-beginner-python-projects/assets/119351159/cad03f2b-f840-459f-9a9c-11e1bd311732)
 
 ## 🤖 Author
 
-<!--Remove the below lines and add yours -->
-
-The name of the author of the code goes here.
-If you have a web site or a Git user name, feel free to link.
+[404mahdi](https://github.com/404mahdi)
