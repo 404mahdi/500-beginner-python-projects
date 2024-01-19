@@ -15,7 +15,8 @@ Go to the specified directory and run the following command: <br>
 
 ## 📺 Demo
 
-<!--Remove the below lines and add yours -->
+![image](https://github.com/404mahdi/500-beginner-python-projects/assets/119351159/80c36611-63a5-4eba-b227-112e794afa42)
+
 
 ## 🤖 Author
 
