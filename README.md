@@ -1,4 +1,4 @@
-# 500 Beginner Python Projects
+# 🎉 500 Beginner Python Projects
 
 Welcome to the 500 Beginner Python Projects repository! This repository is open for contributions and aims to provide a collection of beginner-friendly Python projects for developers to practice their skills.
 
@@ -20,9 +20,10 @@ Each project will be organized in its own directory and contains a README.md fil
 
 ## Projects
 
-| SL  | Project Name                                                                                  | Project Description         | Author                                  |
-| --- | --------------------------------------------------------------------------------------------- | --------------------------- | --------------------------------------- |
-| 01  | [Dice Roller](https://github.com/404mahdi/500-beginner-python-projects/tree/main/dice-roller) | A simple random dice roller | [404mahdi](https://github.com/404mahdi) |
+| SL  | Project Name                                                                                        | Project Description                                     | Author                                  |
+| --- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | --------------------------------------- |
+| 01  | [Dice Roller](https://github.com/404mahdi/500-beginner-python-projects/tree/main/dice-roller)       | A simple random dice roller                             | [404mahdi](https://github.com/404mahdi) |
+| 02  | [Age Calculator](https://github.com/404mahdi/500-beginner-python-projects/tree/main/age-calculator) | Calculate age in days, months and years also in seconds | [404mahdi](https://github.com/404mahdi) |
 
 ## Contributing Guidelines
 
