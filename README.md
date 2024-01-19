@@ -4,15 +4,14 @@ Welcome to the 500 Beginner Python Projects repository! This repository is open 
 
 ## How to Contribute
 
-Check out the [CONTRIBUTING.md](./CONTRIBUTING.md) file for detailed guideline. Here's a quick overview:
+Check out the [CONTRIBUTING.md](./CONTRIBUTING.md) file for detailed guideline. Here's a step by step guide:
 
-1. Fork the repository.
-2. Clone the forked repository to your local machine.
-3. Create a new branch.
-4. Create a new project directory.
-5. Implement your project using Python. Make sure to follow the [project structure](#project-structure).
-6. Commit and push your changes to your forked repository.
-7. Create a pull request to submit your project for review.
+## [Watch This Video](https://www.youtube.com/watch?v=BNd7mNVpaNk)
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=BNd7mNVpaNk" target="_blank">
+ <img src="http://img.youtube.com/vi/BNd7mNVpaNk/hqdefault.jpg" alt="Watch the video" height="500"/>
+</a>
+
 
 ## Project Structure
 
