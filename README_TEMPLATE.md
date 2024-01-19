@@ -15,7 +15,7 @@ You can copy paste my markdown photo insert as following:
 
 A short description about the script must be mentioned here.
 
-## 💻 Languages or Frameworks Used
+## 💻 Frameworks and Modules Used
 
 <!--Remove the below lines and add yours -->
 

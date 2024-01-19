@@ -1,20 +1,20 @@
 # Dice Roller
-<p align='center'><img src="https://github.com/404mahdi/500-beginner-python-projects/assets/119351159/9652069e-30c3-4883-ae94-aa4f13c3251f" height=300px></p>
 
+<p align='center'><img src="https://github.com/404mahdi/500-beginner-python-projects/assets/119351159/9652069e-30c3-4883-ae94-aa4f13c3251f" height=300px></p>
 
 ## 🛠️ Description
 
-This is a random dice roller.
+This is a simple random dice roller.
 
-## 💻 Frameworks Used
+## 💻 Frameworks and Modules Used
 
-Modules used: Tkinter, random
-
+Modules used: Tkinter, random <br>
+They are default modules in python.
 
 ## 🌟 How to run
 
 Go to the directory. <br>
-run `python dice-roller.py`
+run `python dice-roller.py` <br>
 Note: dice.ico should be in the same directory.
 
 ## 📺 Demo
