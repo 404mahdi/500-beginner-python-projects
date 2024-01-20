@@ -12,7 +12,6 @@ Check out the [CONTRIBUTING.md](./CONTRIBUTING.md) file for detailed guideline. 
  <img src="http://img.youtube.com/vi/BNd7mNVpaNk/hqdefault.jpg" alt="Watch the video" height="500"/>
 </a>
 
-
 ## Project Structure
 
 Each project will be organized in its own directory and contains a README.md file with project details and instructions. Check out [README TEMPLATE](./README_TEMPLATE.md) your project.
@@ -23,6 +22,7 @@ Each project will be organized in its own directory and contains a README.md fil
 | --- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | --------------------------------------- |
 | 01  | [Dice Roller](https://github.com/404mahdi/500-beginner-python-projects/tree/main/dice-roller)       | A simple random dice roller                             | [404mahdi](https://github.com/404mahdi) |
 | 02  | [Age Calculator](https://github.com/404mahdi/500-beginner-python-projects/tree/main/age-calculator) | Calculate age in days, months and years also in seconds | [404mahdi](https://github.com/404mahdi) |
+| 03  | [Tic Tac Toe](https://github.com/404mahdi/500-beginner-python-projects/tree/main/tic-tac-toe)       | A not too convenient tic tac toe game.                  | [404mahdi](https://github.com/404mahdi) |
 
 ## Contributing Guidelines
 
