@@ -16,7 +16,8 @@ Go to the directory where the file is located and run the following command:
 
 ## 📺 Demo
 
-<!--Remove the below lines and add yours -->
+![image](https://github.com/404mahdi/500-beginner-python-projects/assets/119351159/65cf5991-7b3b-4a78-8fdc-5f21e3df8e68)
+
 
 ## 🤖 Author
 
