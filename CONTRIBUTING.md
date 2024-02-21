@@ -14,7 +14,7 @@ Thank you for considering contributing to this project! If you face any issues o
 2. Clone the forked repository to your local machine.
 3. Create a new branch.
 4. Create a new project directory.
-5. Implement your project using Python. Make sure to follow the [project structure](#project-structure).
+5. Implement your project using Python. Make sure to follow the [project structure](./README.md/#project-structure).
 6. Commit and push your changes to your forked repository.
 7. Create a pull request to submit your project for review.
 
