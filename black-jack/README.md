@@ -11,8 +11,6 @@
 recreation of the popular game blackjack in python.
 
 
-A short description about the script must be mentioned here.
-
 ## 💻 Frameworks and Modules Used
 
 <!--Remove the below lines and add yours -->
