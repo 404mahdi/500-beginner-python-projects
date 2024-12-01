@@ -35,4 +35,4 @@ run `python black_jack.py`
 
 <!--Remove the below lines and add yours -->
 
-krnxmid(https://github.com/krnxmid)
+[krnxmid](https://github.com/krnxmid)
