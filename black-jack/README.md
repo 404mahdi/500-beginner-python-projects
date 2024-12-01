@@ -8,6 +8,8 @@
 ## 🛠️ Description
 
 <!--Remove the below lines and add yours -->
+recreation of the popular game blackjack in python.
+
 
 A short description about the script must be mentioned here.
 
@@ -25,18 +27,17 @@ No need to install external libraries. random, os and sys is used
 <!--Remove the below lines and add yours -->
 
 Go to the directory.
-run 'python black_jack.py'
+run `python black_jack.py`
 
 
 ## 📺 Demo
 
 <!--Remove the below lines and add yours -->
+![image](https://github.com/user-attachments/assets/6011acb0-18d1-4db1-99e2-ad4cb1874e83)
 
-Add a Screenshot/GIF showing the sample use of your project (jpeg/png/gif).
 
 ## 🤖 Author
 
 <!--Remove the below lines and add yours -->
 
-The name of the author of the code goes here.
-If you have a web site or a Git user name, feel free to link.
+krnxmid(https://github.com/krnxmid)
