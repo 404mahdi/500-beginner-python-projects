@@ -15,9 +15,6 @@ recreation of the popular game blackjack in python.
 
 <!--Remove the below lines and add yours -->
 
-Modules required to be able to use the script successfully
-and how to install them.
-
 No need to install external libraries. random, os and sys is used
 
 ## 🌟 How to run
