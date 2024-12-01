@@ -17,15 +17,16 @@ A short description about the script must be mentioned here.
 
 Modules required to be able to use the script successfully
 and how to install them.
-(If there are a lot of them, including a `requirements.txt` file will work better.)
+
+No need to install external libraries. random, os and sys is used
 
 ## 🌟 How to run
 
 <!--Remove the below lines and add yours -->
 
-Steps on how to run the script.
+Go to the directory.
+run 'python black_jack.py'
 
-`python tic-tac-toe.py`
 
 ## 📺 Demo
 
