@@ -10,7 +10,10 @@ Modules: Tkinter, datetime
 
 ## 🌟 How to run
 
-Go to the specified directory and run the following command: <br>
+Go to the specified directory and run the following command: 
+`cd age-calculator`
+
+and then run this
 `python age-calculator.py`
 
 ## 📺 Demo
