@@ -35,4 +35,4 @@ run `python black_jack.py`
 
 <!--Remove the below lines and add yours -->
 
-:octocat: [krnxmid](https://github.com/krnxmid)
+:octocat: [karanveer-lca](https://github.com/karanveer-lca)
