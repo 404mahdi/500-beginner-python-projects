@@ -1,7 +1,7 @@
 name: PR Validation
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened]
     branches:
       - main
@@ -12,40 +12,41 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-      
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-          
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
-          
+          python-version: "3.x"
+
       - name: Install security tools
         run: |
           pip install bandit safety --quiet
-          
+
       - name: Security scan for malicious code
         id: security-scan
         run: |
           echo "🔒 Running security checks for malicious code patterns..."
           SECURITY_PASSED=true
           SECURITY_WARNINGS=""
-          
+
           # Get list of changed Python files
           CHANGED_PY_FILES=$(git diff --name-only --diff-filter=AM origin/main | grep '\.py$' || true)
-          
+
           if [ -z "$CHANGED_PY_FILES" ]; then
             echo "No Python files changed, skipping security scan"
             echo "security_result=skipped" >> $GITHUB_OUTPUT
             exit 0
           fi
-          
+
           echo "📝 Scanning files: $CHANGED_PY_FILES"
-          
+
           # Check for dangerous patterns in Python code
           for PY_FILE in $CHANGED_PY_FILES; do
             if [ ! -f "$PY_FILE" ]; then
@@ -128,7 +129,7 @@ jobs:
               fi
             fi
           done
-          
+
           # Run Bandit security scanner
           echo ""
           echo "🔍 Running Bandit security scanner..."
@@ -145,7 +146,7 @@ jobs:
               fi
             fi
           done
-          
+
           echo ""
           if [ "$SECURITY_PASSED" = true ]; then
             echo "✅ Security scan passed - no malicious patterns detected!"
@@ -158,32 +159,32 @@ jobs:
             echo "EOF" >> $GITHUB_OUTPUT
             exit 1
           fi
-          
+
       - name: Get changed files
         id: changed-files
         uses: tj-actions/changed-files@v41
-        
+
       - name: Validate project structure
         id: validate
         run: |
           echo "🔍 Validating PR changes..."
           VALIDATION_PASSED=true
           ERRORS=""
-          
+
           # Get list of changed files
           FILES="${{ steps.changed-files.outputs.all_changed_files }}"
-          
+
           # Extract project directories from changed files
           PROJECT_DIRS=$(echo "$FILES" | tr ' ' '\n' | grep -v '^README.md$' | grep -v '^CONTRIBUTING.md$' | grep -v '^LICENSE$' | grep -v '^.github/' | cut -d'/' -f1 | sort -u | grep -v '^$')
-          
+
           if [ -z "$PROJECT_DIRS" ]; then
             echo "✅ Only documentation files changed, skipping project validation"
             echo "validation_result=documentation-only" >> $GITHUB_OUTPUT
             exit 0
           fi
-          
+
           echo "📁 Projects to validate: $PROJECT_DIRS"
-          
+
           for PROJECT_DIR in $PROJECT_DIRS; do
             echo ""
             echo "Validating: $PROJECT_DIR"
@@ -239,7 +240,7 @@ jobs:
               done
             fi
           done
-          
+
           echo ""
           if [ "$VALIDATION_PASSED" = true ]; then
             echo "✅ All validations passed!"
@@ -253,7 +254,7 @@ jobs:
             echo "EOF" >> $GITHUB_OUTPUT
             exit 1
           fi
-          
+
       - name: Comment on PR - Success
         if: (steps.validate.outputs.validation_result == 'passed' && steps.security-scan.outputs.security_result == 'passed') || (steps.validate.outputs.validation_result == 'passed' && steps.security-scan.outputs.security_result == 'skipped')
         uses: actions/github-script@v7
@@ -264,14 +265,14 @@ jobs:
             if (securityStatus === 'passed') {
               securityMessage = '- ✅ Security scan passed - no malicious code detected\n';
             }
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: `✅ **PR Validation Passed!**\n\nYour project meets all the requirements:\n- ✅ Project structure is correct\n- ✅ README.md is present and follows the template\n- ✅ Python files have valid syntax\n${securityMessage}\nThis PR is ready for review and can be merged!`
             })
-            
+
       - name: Add auto-merge label
         if: (steps.validate.outputs.validation_result == 'passed' && steps.security-scan.outputs.security_result == 'passed') || (steps.validate.outputs.validation_result == 'passed' && steps.security-scan.outputs.security_result == 'skipped')
         uses: actions/github-script@v7
@@ -283,7 +284,7 @@ jobs:
               repo: context.repo.repo,
               labels: ['auto-merge-ready']
             })
-            
+
       - name: Comment on PR - Documentation Only
         if: steps.validate.outputs.validation_result == 'documentation-only'
         uses: actions/github-script@v7
@@ -295,7 +296,7 @@ jobs:
               repo: context.repo.repo,
               body: '📝 **Documentation Update Detected**\n\nThis PR only modifies documentation files (README.md, CONTRIBUTING.md, etc.).\nNo project validation required.\n\nReady for review!'
             })
-            
+
       - name: Comment on PR - Failure
         if: failure() && steps.validate.outputs.validation_result == 'failed'
         uses: actions/github-script@v7
@@ -308,7 +309,7 @@ jobs:
               repo: context.repo.repo,
               body: `❌ **PR Validation Failed**\n\nPlease fix the following issues:\n${errors}\n\n📖 Make sure to follow the [Contributing Guidelines](../CONTRIBUTING.md) and use the [README Template](../README_TEMPLATE.md).`
             })
-            
+
       - name: Comment on PR - Security Failure
         if: failure() && steps.security-scan.outputs.security_result == 'failed'
         uses: actions/github-script@v7
