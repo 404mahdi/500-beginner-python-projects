@@ -9,6 +9,7 @@ Check out the [CONTRIBUTING.md](./CONTRIBUTING.md) file for detailed guideline. 
 ### 🤖 Automated PR Validation
 
 We've implemented GitHub Actions to automatically validate pull requests! When you submit a PR:
+
 - ✅ Your project structure will be automatically checked
 - ✅ README.md format will be validated
 - ✅ Python code syntax will be verified
@@ -21,10 +22,6 @@ We've implemented GitHub Actions to automatically validate pull requests! When y
 See the [GitHub Actions Documentation](./.github/README.md) for more details.
 
 ## [Watch This Video](https://www.youtube.com/watch?v=BNd7mNVpaNk)
-
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=BNd7mNVpaNk" target="_blank">
- <img src="http://img.youtube.com/vi/BNd7mNVpaNk/hqdefault.jpg" alt="Watch the video" height="500"/>
-</a>
 
 ## Project Structure
 
