@@ -55,44 +55,44 @@ jobs:
             echo ""
             echo "Scanning: $PY_FILE"
             
-            # Check for eval/exec usage
-            if grep -n "eval\s*(" "$PY_FILE" 2>/dev/null; then
+            # Check for eval/exec usage (using -E for extended regex)
+            if grep -nE "eval[[:space:]]*\(" "$PY_FILE" 2>/dev/null; then
               echo "⚠️  WARNING: Found eval() in $PY_FILE - this can execute arbitrary code"
-              SECURITY_WARNINGS="${SECURITY_WARNINGS}\n- ⚠️  Found \`eval()\` in $PY_FILE (line $(grep -n 'eval(' "$PY_FILE" | cut -d: -f1 | head -1)) - can execute arbitrary code"
+              SECURITY_WARNINGS="${SECURITY_WARNINGS}\n- ⚠️  Found \`eval()\` in $PY_FILE (line $(grep -nE 'eval[[:space:]]*\(' "$PY_FILE" | cut -d: -f1 | head -1)) - can execute arbitrary code"
               SECURITY_PASSED=false
             fi
             
-            if grep -n "exec\s*(" "$PY_FILE" 2>/dev/null; then
+            if grep -nE "exec[[:space:]]*\(" "$PY_FILE" 2>/dev/null; then
               echo "⚠️  WARNING: Found exec() in $PY_FILE - this can execute arbitrary code"
-              SECURITY_WARNINGS="${SECURITY_WARNINGS}\n- ⚠️  Found \`exec()\` in $PY_FILE (line $(grep -n 'exec(' "$PY_FILE" | cut -d: -f1 | head -1)) - can execute arbitrary code"
+              SECURITY_WARNINGS="${SECURITY_WARNINGS}\n- ⚠️  Found \`exec()\` in $PY_FILE (line $(grep -nE 'exec[[:space:]]*\(' "$PY_FILE" | cut -d: -f1 | head -1)) - can execute arbitrary code"
               SECURITY_PASSED=false
             fi
             
             # Check for compile() usage
-            if grep -n "compile\s*(" "$PY_FILE" 2>/dev/null; then
+            if grep -nE "compile[[:space:]]*\(" "$PY_FILE" 2>/dev/null; then
               echo "⚠️  WARNING: Found compile() in $PY_FILE"
-              SECURITY_WARNINGS="${SECURITY_WARNINGS}\n- ⚠️  Found \`compile()\` in $PY_FILE (line $(grep -n 'compile(' "$PY_FILE" | cut -d: -f1 | head -1)) - can compile and execute code"
+              SECURITY_WARNINGS="${SECURITY_WARNINGS}\n- ⚠️  Found \`compile()\` in $PY_FILE (line $(grep -nE 'compile[[:space:]]*\(' "$PY_FILE" | cut -d: -f1 | head -1)) - can compile and execute code"
               SECURITY_PASSED=false
             fi
             
             # Check for __import__ usage
-            if grep -n "__import__\s*(" "$PY_FILE" 2>/dev/null; then
+            if grep -nE "__import__[[:space:]]*\(" "$PY_FILE" 2>/dev/null; then
               echo "⚠️  WARNING: Found __import__() in $PY_FILE"
-              SECURITY_WARNINGS="${SECURITY_WARNINGS}\n- ⚠️  Found \`__import__()\` in $PY_FILE (line $(grep -n '__import__(' "$PY_FILE" | cut -d: -f1 | head -1)) - can dynamically import modules"
+              SECURITY_WARNINGS="${SECURITY_WARNINGS}\n- ⚠️  Found \`__import__()\` in $PY_FILE (line $(grep -nE '__import__[[:space:]]*\(' "$PY_FILE" | cut -d: -f1 | head -1)) - can dynamically import modules"
               SECURITY_PASSED=false
             fi
             
             # Check for os.system usage
-            if grep -n "os\.system\s*(" "$PY_FILE" 2>/dev/null; then
+            if grep -nE "os\.system[[:space:]]*\(" "$PY_FILE" 2>/dev/null; then
               echo "⚠️  WARNING: Found os.system() in $PY_FILE"
-              SECURITY_WARNINGS="${SECURITY_WARNINGS}\n- ⚠️  Found \`os.system()\` in $PY_FILE (line $(grep -n 'os\.system(' "$PY_FILE" | cut -d: -f1 | head -1)) - can execute shell commands"
+              SECURITY_WARNINGS="${SECURITY_WARNINGS}\n- ⚠️  Found \`os.system()\` in $PY_FILE (line $(grep -nE 'os\.system[[:space:]]*\(' "$PY_FILE" | cut -d: -f1 | head -1)) - can execute shell commands"
               SECURITY_PASSED=false
             fi
             
             # Check for subprocess with shell=True
-            if grep -n "shell\s*=\s*True" "$PY_FILE" 2>/dev/null; then
+            if grep -nE "shell[[:space:]]*=[[:space:]]*True" "$PY_FILE" 2>/dev/null; then
               echo "⚠️  WARNING: Found shell=True in $PY_FILE"
-              SECURITY_WARNINGS="${SECURITY_WARNINGS}\n- ⚠️  Found \`shell=True\` in subprocess call in $PY_FILE (line $(grep -n 'shell.*=.*True' "$PY_FILE" | cut -d: -f1 | head -1)) - can lead to shell injection"
+              SECURITY_WARNINGS="${SECURITY_WARNINGS}\n- ⚠️  Found \`shell=True\` in subprocess call in $PY_FILE (line $(grep -nE 'shell[[:space:]]*=[[:space:]]*True' "$PY_FILE" | cut -d: -f1 | head -1)) - can lead to shell injection"
               SECURITY_PASSED=false
             fi
             
