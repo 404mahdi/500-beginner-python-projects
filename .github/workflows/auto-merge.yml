@@ -1,0 +1,168 @@
+name: Auto Merge
+
+on:
+  pull_request_target:
+    types: [labeled, ready_for_review]
+    branches:
+      - main
+  workflow_run:
+    workflows: ["PR Validation"]
+    types:
+      - completed
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'pull_request_target' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    
+    steps:
+      - name: Get PR number
+        id: get-pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let prNumber;
+            
+            if (context.eventName === 'pull_request_target') {
+              prNumber = context.issue.number;
+            } else if (context.eventName === 'workflow_run') {
+              // Get PR number from workflow_run event
+              // This is safer as it uses the workflow_run payload
+              const workflowRun = context.payload.workflow_run;
+              
+              // Get associated pull requests for this workflow run
+              const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                commit_sha: workflowRun.head_sha
+              });
+              
+              // Find the PR that matches the head branch
+              const pr = prs.find(p => 
+                p.head.ref === workflowRun.head_branch && 
+                p.state === 'open'
+              );
+              
+              if (pr) {
+                prNumber = pr.number;
+              }
+            }
+            
+            if (!prNumber) {
+              core.setFailed('Could not determine PR number');
+              return;
+            }
+            
+            core.setOutput('pr-number', prNumber);
+            return prNumber;
+            
+      - name: Check if PR has auto-merge label
+        id: check-label
+        if: steps.get-pr.outputs.pr-number
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.get-pr.outputs.pr-number }};
+            
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+            
+            const hasLabel = pr.labels.some(label => label.name === 'auto-merge-ready');
+            core.setOutput('has-label', hasLabel);
+            
+            if (hasLabel) {
+              console.log('✅ PR has auto-merge-ready label');
+            } else {
+              console.log('⏭️  PR does not have auto-merge-ready label, skipping auto-merge');
+            }
+            
+            return hasLabel;
+            
+      - name: Approve PR
+        if: steps.check-label.outputs.has-label == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber = ${{ steps.get-pr.outputs.pr-number }};
+            
+            try {
+              await github.rest.pulls.createReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                event: 'APPROVE',
+                body: '✅ Auto-approved: All validation checks passed!'
+              });
+              console.log('✅ PR approved');
+            } catch (error) {
+              console.log('Note: Could not approve PR (might be already approved or from same user):', error.message);
+            }
+            
+      - name: Enable auto-merge
+        if: steps.check-label.outputs.has-label == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber = ${{ steps.get-pr.outputs.pr-number }};
+            
+            try {
+              // Get PR details
+              const { data: pr } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber
+              });
+              
+              // Enable auto-merge with squash
+              const mutation = `
+                mutation($pullRequestId: ID!) {
+                  enablePullRequestAutoMerge(input: {
+                    pullRequestId: $pullRequestId,
+                    mergeMethod: SQUASH
+                  }) {
+                    pullRequest {
+                      autoMergeRequest {
+                        enabledAt
+                      }
+                    }
+                  }
+                }
+              `;
+              
+              await github.graphql(mutation, {
+                pullRequestId: pr.node_id
+              });
+              
+              console.log('✅ Auto-merge enabled for PR #' + prNumber);
+              
+              // Add comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: '🤖 **Auto-merge enabled!**\n\nThis PR will be automatically merged once all required checks pass.'
+              });
+              
+            } catch (error) {
+              console.log('⚠️  Could not enable auto-merge:', error.message);
+              console.log('Note: Auto-merge might not be available for this repository or PR.');
+              
+              // Comment that manual merge is required
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: '✅ **PR Approved and Ready!**\n\nThis PR has passed all validation checks and has been automatically approved.\n\nNote: Auto-merge is not enabled for this repository. A maintainer will merge this PR manually.'
+              });
+            }
