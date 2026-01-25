@@ -55,6 +55,40 @@ This directory contains automated workflows for the 500 Beginner Python Projects
 - All validation checks must pass
 - No merge conflicts
 
+### 3. Update README on Merge (`update-readme.yml`)
+
+**Trigger**: When a pull request is merged to main branch
+
+**Purpose**: Automatically adds new projects to the main README.md table
+
+**Process**:
+1. Detects new project directories from merged PR
+2. Extracts project information from project README.md:
+   - Project title (from first # heading)
+   - Description (from ## Description section)
+   - Author name and link (from ## Author section)
+3. Checks if project already exists in main README
+4. If not present, adds new entry to the projects table with:
+   - Next available serial number
+   - Project title with link to project directory
+   - Project description
+   - Author name with link to GitHub profile
+5. Commits and pushes changes to main branch
+6. Comments on the merged PR confirming the update
+
+**Benefits**:
+- 🤖 Eliminates manual README updates
+- ✅ Ensures consistent formatting
+- 🎯 Automatically assigns serial numbers
+- 📝 Extracts info directly from project documentation
+- 🚫 Prevents duplicate entries
+4. Comments on PR with merge status
+
+**Requirements**:
+- PR must have `auto-merge-ready` label (added by PR Validation workflow)
+- All validation checks must pass
+- No merge conflicts
+
 ## How It Works
 
 ```

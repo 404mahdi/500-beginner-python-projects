@@ -12,7 +12,11 @@ We've implemented GitHub Actions to automatically validate pull requests! When y
 - ✅ Your project structure will be automatically checked
 - ✅ README.md format will be validated
 - ✅ Python code syntax will be verified
+- 🔒 Security scan for malicious code patterns
 - ✅ PRs that pass all checks can be auto-merged!
+- 🎉 **Your project is automatically added to the README table after merge!**
+
+**No need to manually update the main README** - our bot handles it for you!
 
 See the [GitHub Actions Documentation](./.github/README.md) for more details.
 

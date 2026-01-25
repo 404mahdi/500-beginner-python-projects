@@ -1,0 +1,237 @@
+name: Update README on Merge
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+          
+      - name: Get merged changes
+        id: get-changes
+        run: |
+          echo "Getting files changed in merged PR..."
+          
+          # Get the list of added/modified directories from the merge
+          CHANGED_DIRS=$(git diff --name-only HEAD~1 HEAD | grep -v '^README.md$' | grep -v '^CONTRIBUTING.md$' | grep -v '^LICENSE$' | grep -v '^.github/' | grep -v '^README_TEMPLATE.md$' | cut -d'/' -f1 | sort -u | grep -v '^$')
+          
+          if [ -z "$CHANGED_DIRS" ]; then
+            echo "No new project directories found"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "Changed directories: $CHANGED_DIRS"
+          echo "changed_dirs<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_DIRS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+          
+      - name: Update README with new projects
+        if: steps.get-changes.outputs.has_changes == 'true'
+        run: |
+          python3 << 'PYTHON_SCRIPT'
+          import os
+          import re
+          import sys
+          from pathlib import Path
+          
+          def extract_project_info(project_dir):
+              """Extract project name, description, and author from project README"""
+              readme_path = Path(project_dir) / "README.md"
+              
+              if not readme_path.exists():
+                  return None
+                  
+              with open(readme_path, 'r', encoding='utf-8') as f:
+                  lines = f.readlines()
+              
+              title = project_dir
+              description = "A Python project"
+              author_name = ""
+              author_link = ""
+              
+              # Extract title (first # heading)
+              for line in lines:
+                  if line.startswith('#') and not line.startswith('##'):
+                      title = line.strip().lstrip('#').strip()
+                      break
+              
+              # Extract description - find line after Description heading
+              for i, line in enumerate(lines):
+                  if re.search(r'##.*Description', line, re.IGNORECASE):
+                      # Get next non-empty line
+                      for j in range(i+1, len(lines)):
+                          stripped = lines[j].strip()
+                          if stripped and not stripped.startswith('<') and not stripped.startswith('!') and not stripped.startswith('##') and not stripped.startswith('<!--'):
+                              description = stripped
+                              break
+                      break
+              
+              # Extract author - look for link format [name](url)
+              content = ''.join(lines)
+              author_match = re.search(r'##\s+.*Author.*\n\s*\[([^\]]+)\]\(([^\)]+)\)', content, re.DOTALL | re.IGNORECASE)
+              if author_match:
+                  author_name = author_match.group(1).strip()
+                  author_link = author_match.group(2).strip()
+              else:
+                  # Use PR author as fallback
+                  author_name = "${{ github.event.pull_request.user.login }}"
+                  author_link = "https://github.com/${{ github.event.pull_request.user.login }}"
+              
+              return {
+                  'title': title,
+                  'description': description,
+                  'author_name': author_name,
+                  'author_link': author_link,
+                  'dir': project_dir
+              }
+          
+          def get_next_serial_number(readme_content):
+              """Get the next available serial number"""
+              # Find all serial numbers in the table
+              serial_matches = re.findall(r'^\|\s*(\d+)\s*\|', readme_content, re.MULTILINE)
+              if serial_matches:
+                  serial_numbers = [int(s) for s in serial_matches]
+                  return max(serial_numbers) + 1
+              return 1
+          
+          def is_project_in_readme(readme_content, project_dir):
+              """Check if project is already in README"""
+              # Check if the project directory link exists in the README
+              pattern = rf'\[.*?\]\(.*?{re.escape(project_dir)}.*?\)'
+              return bool(re.search(pattern, readme_content))
+          
+          def add_project_to_readme(readme_path, project_info):
+              """Add project to README table"""
+              with open(readme_path, 'r', encoding='utf-8') as f:
+                  content = f.read()
+              
+              # Check if already exists
+              if is_project_in_readme(content, project_info['dir']):
+                  print(f"Project {project_info['dir']} already exists in README")
+                  return False
+              
+              # Get next serial number
+              serial = get_next_serial_number(content)
+              serial_str = f"{serial:02d}"
+              
+              # Create new row
+              repo_owner = "${{ github.repository_owner }}"
+              repo_name = "${{ github.event.repository.name }}"
+              project_link = f"https://github.com/{repo_owner}/{repo_name}/tree/main/{project_info['dir']}"
+              
+              author_md = f"[{project_info['author_name']}]({project_info['author_link']})"
+              
+              new_row = f"| {serial_str}  | [{project_info['title']}]({project_link}) | {project_info['description']} | {author_md} |\n"
+              
+              # Find the table end and insert before "## Contributing Guidelines"
+              # Look for the last row of the table
+              table_pattern = r'(\|\s*\d+\s*\|[^\n]+\n)(\n##\s+Contributing Guidelines)'
+              
+              if re.search(table_pattern, content):
+                  # Insert after the last table row
+                  content = re.sub(
+                      table_pattern,
+                      r'\1' + new_row + r'\2',
+                      content
+                  )
+              else:
+                  print("Warning: Could not find table insertion point")
+                  return False
+              
+              # Write back to file
+              with open(readme_path, 'w', encoding='utf-8') as f:
+                  f.write(content)
+              
+              print(f"✅ Added {project_info['title']} to README (Serial #{serial_str})")
+              return True
+          
+          # Main execution
+          changed_dirs = """${{ steps.get-changes.outputs.changed_dirs }}""".strip().split('\n')
+          readme_path = "README.md"
+          
+          updated = False
+          for project_dir in changed_dirs:
+              project_dir = project_dir.strip()
+              if not project_dir:
+                  continue
+                  
+              print(f"\nProcessing: {project_dir}")
+              
+              # Check if it's a valid project directory
+              if not os.path.isdir(project_dir):
+                  print(f"Skipping {project_dir} - not a directory")
+                  continue
+              
+              # Extract project info
+              project_info = extract_project_info(project_dir)
+              if not project_info:
+                  print(f"Could not extract info from {project_dir}")
+                  continue
+              
+              print(f"Project: {project_info['title']}")
+              print(f"Description: {project_info['description']}")
+              print(f"Author: {project_info['author_name']}")
+              
+              # Add to README
+              if add_project_to_readme(readme_path, project_info):
+                  updated = True
+          
+          if updated:
+              print("\n✅ README.md updated successfully!")
+              sys.exit(0)
+          else:
+              print("\nℹ️  No updates needed to README.md")
+              sys.exit(1)
+          
+          PYTHON_SCRIPT
+          
+      - name: Commit and push changes
+        if: steps.get-changes.outputs.has_changes == 'true' && success()
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          git add README.md
+          
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "docs: Auto-update README with new project(s) from PR #${{ github.event.pull_request.number }}"
+            git push
+            
+            echo "✅ README.md updated and pushed to main branch"
+          fi
+          
+      - name: Comment on PR
+        if: steps.get-changes.outputs.has_changes == 'true' && success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ **README Updated!**\n\nYour project has been automatically added to the main README.md table.\n\nThank you for your contribution! 🎉'
+            })

@@ -46,6 +46,16 @@ We've enabled GitHub Actions to automatically validate your pull requests! Here'
 4. **Feedback**: You'll receive a comment with the validation results
 5. **Auto-merge**: If all checks pass, your PR will be labeled `auto-merge-ready` and automatically approved
 6. **Merge**: PRs that pass validation can be automatically merged (if repository settings allow)
+7. **README Update**: After merge, your project is automatically added to the main README.md table! 🎉
+
+### No Manual README Updates Needed! 
+When your PR is merged, a bot will automatically:
+- Extract your project name, description, and author info from your project's README.md
+- Add your project to the main README.md table with the next available serial number
+- Commit and push the update to the main branch
+- You'll get a confirmation comment on your PR
+
+**Important**: Make sure your project's README.md follows the template and includes all required sections!
 
 ### If validation fails:
 - Check the PR comments for specific errors
