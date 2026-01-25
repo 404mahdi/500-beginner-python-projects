@@ -8,9 +8,20 @@ This directory contains automated workflows for the 500 Beginner Python Projects
 
 **Trigger**: When a pull request is opened, updated, or reopened
 
-**Purpose**: Automatically validates that pull requests meet the contribution guidelines
+**Purpose**: Automatically validates that pull requests meet the contribution guidelines and checks for malicious code
 
 **Checks Performed**:
+
+**Security Checks** 🔒:
+- 🚨 Scans for dangerous Python functions (`eval()`, `exec()`, `compile()`, `__import__()`)
+- 🚨 Detects shell command execution (`os.system()`, `shell=True` in subprocess)
+- 🚨 Identifies pickle usage (can execute arbitrary code)
+- 🚨 Flags suspicious IP addresses (potential data exfiltration)
+- 🚨 Detects base64 decoding (potential code obfuscation)
+- 🚨 Checks for writes to system directories
+- 🚨 Runs Bandit security scanner for additional vulnerability detection
+
+**Structure Checks**:
 - ✅ Validates project directory structure
 - ✅ Ensures README.md exists and contains required sections:
   - Description
@@ -25,6 +36,7 @@ This directory contains automated workflows for the 500 Beginner Python Projects
 - Comments on PR with validation results
 - Adds labels for automated processing
 - Provides specific error messages if validation fails
+- **Blocks auto-merge if security concerns are detected**
 
 ### 2. Auto Merge (`auto-merge.yml`)
 

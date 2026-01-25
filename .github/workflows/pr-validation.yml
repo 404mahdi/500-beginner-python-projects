@@ -24,6 +24,141 @@ jobs:
         with:
           python-version: '3.x'
           
+      - name: Install security tools
+        run: |
+          pip install bandit safety --quiet
+          
+      - name: Security scan for malicious code
+        id: security-scan
+        run: |
+          echo "🔒 Running security checks for malicious code patterns..."
+          SECURITY_PASSED=true
+          SECURITY_WARNINGS=""
+          
+          # Get list of changed Python files
+          CHANGED_PY_FILES=$(git diff --name-only --diff-filter=AM origin/main | grep '\.py$' || true)
+          
+          if [ -z "$CHANGED_PY_FILES" ]; then
+            echo "No Python files changed, skipping security scan"
+            echo "security_result=skipped" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "📝 Scanning files: $CHANGED_PY_FILES"
+          
+          # Check for dangerous patterns in Python code
+          for PY_FILE in $CHANGED_PY_FILES; do
+            if [ ! -f "$PY_FILE" ]; then
+              continue
+            fi
+            
+            echo ""
+            echo "Scanning: $PY_FILE"
+            
+            # Check for eval/exec usage
+            if grep -n "eval\s*(" "$PY_FILE" 2>/dev/null; then
+              echo "⚠️  WARNING: Found eval() in $PY_FILE - this can execute arbitrary code"
+              SECURITY_WARNINGS="${SECURITY_WARNINGS}\n- ⚠️  Found \`eval()\` in $PY_FILE (line $(grep -n 'eval(' "$PY_FILE" | cut -d: -f1 | head -1)) - can execute arbitrary code"
+              SECURITY_PASSED=false
+            fi
+            
+            if grep -n "exec\s*(" "$PY_FILE" 2>/dev/null; then
+              echo "⚠️  WARNING: Found exec() in $PY_FILE - this can execute arbitrary code"
+              SECURITY_WARNINGS="${SECURITY_WARNINGS}\n- ⚠️  Found \`exec()\` in $PY_FILE (line $(grep -n 'exec(' "$PY_FILE" | cut -d: -f1 | head -1)) - can execute arbitrary code"
+              SECURITY_PASSED=false
+            fi
+            
+            # Check for compile() usage
+            if grep -n "compile\s*(" "$PY_FILE" 2>/dev/null; then
+              echo "⚠️  WARNING: Found compile() in $PY_FILE"
+              SECURITY_WARNINGS="${SECURITY_WARNINGS}\n- ⚠️  Found \`compile()\` in $PY_FILE (line $(grep -n 'compile(' "$PY_FILE" | cut -d: -f1 | head -1)) - can compile and execute code"
+              SECURITY_PASSED=false
+            fi
+            
+            # Check for __import__ usage
+            if grep -n "__import__\s*(" "$PY_FILE" 2>/dev/null; then
+              echo "⚠️  WARNING: Found __import__() in $PY_FILE"
+              SECURITY_WARNINGS="${SECURITY_WARNINGS}\n- ⚠️  Found \`__import__()\` in $PY_FILE (line $(grep -n '__import__(' "$PY_FILE" | cut -d: -f1 | head -1)) - can dynamically import modules"
+              SECURITY_PASSED=false
+            fi
+            
+            # Check for os.system usage
+            if grep -n "os\.system\s*(" "$PY_FILE" 2>/dev/null; then
+              echo "⚠️  WARNING: Found os.system() in $PY_FILE"
+              SECURITY_WARNINGS="${SECURITY_WARNINGS}\n- ⚠️  Found \`os.system()\` in $PY_FILE (line $(grep -n 'os\.system(' "$PY_FILE" | cut -d: -f1 | head -1)) - can execute shell commands"
+              SECURITY_PASSED=false
+            fi
+            
+            # Check for subprocess with shell=True
+            if grep -n "shell\s*=\s*True" "$PY_FILE" 2>/dev/null; then
+              echo "⚠️  WARNING: Found shell=True in $PY_FILE"
+              SECURITY_WARNINGS="${SECURITY_WARNINGS}\n- ⚠️  Found \`shell=True\` in subprocess call in $PY_FILE (line $(grep -n 'shell.*=.*True' "$PY_FILE" | cut -d: -f1 | head -1)) - can lead to shell injection"
+              SECURITY_PASSED=false
+            fi
+            
+            # Check for pickle usage (can execute arbitrary code)
+            if grep -n "import pickle\|from pickle" "$PY_FILE" 2>/dev/null; then
+              echo "⚠️  WARNING: Found pickle import in $PY_FILE"
+              SECURITY_WARNINGS="${SECURITY_WARNINGS}\n- ⚠️  Found \`pickle\` import in $PY_FILE - pickle can execute arbitrary code during deserialization"
+              SECURITY_PASSED=false
+            fi
+            
+            # Check for requests to suspicious domains or IPs
+            if grep -niE "(http://|https://)?([0-9]{1,3}\.){3}[0-9]{1,3}" "$PY_FILE" 2>/dev/null | grep -v "127.0.0.1\|localhost\|0.0.0.0" | grep -v "^#" | head -1; then
+              echo "⚠️  WARNING: Found suspicious IP address in $PY_FILE"
+              SECURITY_WARNINGS="${SECURITY_WARNINGS}\n- ⚠️  Found direct IP address in $PY_FILE - potential data exfiltration risk"
+              SECURITY_PASSED=false
+            fi
+            
+            # Check for base64 encoding (often used to obfuscate malicious code)
+            if grep -n "import base64\|from base64" "$PY_FILE" 2>/dev/null; then
+              if grep -n "decode\|b64decode" "$PY_FILE" 2>/dev/null; then
+                echo "⚠️  INFO: Found base64 decoding in $PY_FILE - review for obfuscated code"
+                SECURITY_WARNINGS="${SECURITY_WARNINGS}\n- ℹ️  Found base64 decoding in $PY_FILE - please review to ensure it's not obfuscating malicious code"
+              fi
+            fi
+            
+            # Check for file operations that could be dangerous
+            if grep -n "open\s*(" "$PY_FILE" 2>/dev/null | grep -E "w|a|w\+|a\+" | grep -v "^#"; then
+              # Check if writing to system directories
+              if grep -niE "open\s*\(\s*['\"]/(etc|bin|usr|sys|boot|dev|proc)" "$PY_FILE" 2>/dev/null; then
+                echo "⚠️  WARNING: Found file write to system directory in $PY_FILE"
+                SECURITY_WARNINGS="${SECURITY_WARNINGS}\n- ⚠️  Found file write to system directory in $PY_FILE - potential system compromise"
+                SECURITY_PASSED=false
+              fi
+            fi
+          done
+          
+          # Run Bandit security scanner
+          echo ""
+          echo "🔍 Running Bandit security scanner..."
+          for PY_FILE in $CHANGED_PY_FILES; do
+            if [ -f "$PY_FILE" ]; then
+              # Run bandit with medium severity threshold
+              BANDIT_OUTPUT=$(bandit -l -i -r "$PY_FILE" 2>&1 || true)
+              
+              # Check for high or medium severity issues
+              if echo "$BANDIT_OUTPUT" | grep -E "Severity: (High|Medium)" > /dev/null; then
+                echo "⚠️  Bandit found security issues in $PY_FILE"
+                SECURITY_WARNINGS="${SECURITY_WARNINGS}\n- ⚠️  Bandit security scanner found issues in $PY_FILE"
+                SECURITY_PASSED=false
+              fi
+            fi
+          done
+          
+          echo ""
+          if [ "$SECURITY_PASSED" = true ]; then
+            echo "✅ Security scan passed - no malicious patterns detected!"
+            echo "security_result=passed" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Security scan failed - potentially malicious code detected!"
+            echo "security_result=failed" >> $GITHUB_OUTPUT
+            echo "security_warnings<<EOF" >> $GITHUB_OUTPUT
+            echo -e "$SECURITY_WARNINGS" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
       - name: Get changed files
         id: changed-files
         uses: tj-actions/changed-files@v41
@@ -120,19 +255,25 @@ jobs:
           fi
           
       - name: Comment on PR - Success
-        if: steps.validate.outputs.validation_result == 'passed'
+        if: (steps.validate.outputs.validation_result == 'passed' && steps.security-scan.outputs.security_result == 'passed') || (steps.validate.outputs.validation_result == 'passed' && steps.security-scan.outputs.security_result == 'skipped')
         uses: actions/github-script@v7
         with:
           script: |
+            const securityStatus = '${{ steps.security-scan.outputs.security_result }}';
+            let securityMessage = '';
+            if (securityStatus === 'passed') {
+              securityMessage = '- ✅ Security scan passed - no malicious code detected\n';
+            }
+            
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '✅ **PR Validation Passed!**\n\nYour project meets all the requirements:\n- ✅ Project structure is correct\n- ✅ README.md is present and follows the template\n- ✅ Python files have valid syntax\n\nThis PR is ready for review and can be merged!'
+              body: `✅ **PR Validation Passed!**\n\nYour project meets all the requirements:\n- ✅ Project structure is correct\n- ✅ README.md is present and follows the template\n- ✅ Python files have valid syntax\n${securityMessage}\nThis PR is ready for review and can be merged!`
             })
             
       - name: Add auto-merge label
-        if: steps.validate.outputs.validation_result == 'passed'
+        if: (steps.validate.outputs.validation_result == 'passed' && steps.security-scan.outputs.security_result == 'passed') || (steps.validate.outputs.validation_result == 'passed' && steps.security-scan.outputs.security_result == 'skipped')
         uses: actions/github-script@v7
         with:
           script: |
@@ -166,4 +307,17 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: `❌ **PR Validation Failed**\n\nPlease fix the following issues:\n${errors}\n\n📖 Make sure to follow the [Contributing Guidelines](../CONTRIBUTING.md) and use the [README Template](../README_TEMPLATE.md).`
+            })
+            
+      - name: Comment on PR - Security Failure
+        if: failure() && steps.security-scan.outputs.security_result == 'failed'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const warnings = `${{ steps.security-scan.outputs.security_warnings }}`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🚨 **Security Scan Failed - Potentially Malicious Code Detected**\n\n**This PR has been flagged for security concerns:**\n${warnings}\n\n**Action Required:**\n- Review the flagged code patterns\n- Remove any potentially malicious code\n- If these patterns are necessary for your project, please explain their purpose in the PR description\n- A maintainer will review this PR manually\n\n⚠️  **This PR will NOT be auto-merged due to security concerns.**\n\n📖 For more information, see our [Contributing Guidelines](../CONTRIBUTING.md).`
             })

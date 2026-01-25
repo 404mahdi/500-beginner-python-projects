@@ -23,6 +23,13 @@ Thank you for considering contributing to this project! If you face any issues o
 We've enabled GitHub Actions to automatically validate your pull requests! Here's what happens:
 
 ### What gets checked:
+- 🔒 **Security Scan**: Automated detection of potentially malicious code patterns
+  - Dangerous functions like `eval()`, `exec()`, `compile()`
+  - Shell command execution (`os.system()`, `shell=True`)
+  - Suspicious imports (pickle, base64 decoding)
+  - Direct IP addresses (potential data exfiltration)
+  - System directory writes
+  - Bandit security scanner for additional vulnerabilities
 - ✅ **Project Structure**: Your project must be in its own directory
 - ✅ **README.md**: Must be present and include required sections:
   - Description
@@ -34,15 +41,30 @@ We've enabled GitHub Actions to automatically validate your pull requests! Here'
 
 ### Automated Workflow:
 1. **Submit PR**: When you create a pull request, automated checks will run
-2. **Validation**: The workflow validates your project structure and code
-3. **Feedback**: You'll receive a comment with the validation results
-4. **Auto-merge**: If all checks pass, your PR will be labeled `auto-merge-ready` and automatically approved
-5. **Merge**: PRs that pass validation can be automatically merged (if repository settings allow)
+2. **Security Scan**: Your Python code is scanned for malicious patterns
+3. **Validation**: The workflow validates your project structure and code
+4. **Feedback**: You'll receive a comment with the validation results
+5. **Auto-merge**: If all checks pass, your PR will be labeled `auto-merge-ready` and automatically approved
+6. **Merge**: PRs that pass validation can be automatically merged (if repository settings allow)
 
 ### If validation fails:
 - Check the PR comments for specific errors
 - Fix the issues in your branch
 - Push the changes - validation will run again automatically
+
+### If security scan flags your code:
+- 🚨 Review the security warnings carefully
+- Remove any potentially malicious code patterns
+- If the flagged code is necessary for your project's functionality, explain why in your PR description
+- A maintainer will manually review PRs with security concerns before merging
+
+### Safe coding practices:
+- ❌ Avoid using `eval()`, `exec()`, or `compile()` - they can execute arbitrary code
+- ❌ Don't use `os.system()` or `subprocess` with `shell=True` - use safer alternatives
+- ❌ Avoid pickle for data serialization - use JSON instead
+- ✅ Use parameterized queries/commands to prevent injection attacks
+- ✅ Validate and sanitize all user inputs
+- ✅ Use built-in libraries and functions when possible
 
 ### Documentation Changes:
 - PRs that only modify documentation files (README.md, CONTRIBUTING.md) skip project validation
