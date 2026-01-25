@@ -1,0 +1,169 @@
+name: PR Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+
+jobs:
+  validate-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+          
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v41
+        
+      - name: Validate project structure
+        id: validate
+        run: |
+          echo "🔍 Validating PR changes..."
+          VALIDATION_PASSED=true
+          ERRORS=""
+          
+          # Get list of changed files
+          FILES="${{ steps.changed-files.outputs.all_changed_files }}"
+          
+          # Extract project directories from changed files
+          PROJECT_DIRS=$(echo "$FILES" | tr ' ' '\n' | grep -v '^README.md$' | grep -v '^CONTRIBUTING.md$' | grep -v '^LICENSE$' | grep -v '^.github/' | cut -d'/' -f1 | sort -u | grep -v '^$')
+          
+          if [ -z "$PROJECT_DIRS" ]; then
+            echo "✅ Only documentation files changed, skipping project validation"
+            echo "validation_result=documentation-only" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "📁 Projects to validate: $PROJECT_DIRS"
+          
+          for PROJECT_DIR in $PROJECT_DIRS; do
+            echo ""
+            echo "Validating: $PROJECT_DIR"
+            
+            # Check if project directory exists
+            if [ ! -d "$PROJECT_DIR" ]; then
+              echo "❌ Project directory '$PROJECT_DIR' does not exist"
+              ERRORS="${ERRORS}\n- Project directory '$PROJECT_DIR' does not exist"
+              VALIDATION_PASSED=false
+              continue
+            fi
+            
+            # Check for README.md
+            if [ ! -f "$PROJECT_DIR/README.md" ]; then
+              echo "❌ Missing README.md in $PROJECT_DIR"
+              ERRORS="${ERRORS}\n- Missing README.md in $PROJECT_DIR"
+              VALIDATION_PASSED=false
+            else
+              echo "✅ README.md found in $PROJECT_DIR"
+              
+              # Check if README follows template structure
+              REQUIRED_SECTIONS=("Description" "Frameworks and Modules Used" "How to run" "Author")
+              for SECTION in "${REQUIRED_SECTIONS[@]}"; do
+                if ! grep -qi "$SECTION" "$PROJECT_DIR/README.md"; then
+                  echo "⚠️  README.md in $PROJECT_DIR missing section: $SECTION"
+                  ERRORS="${ERRORS}\n- README.md in $PROJECT_DIR should include section: $SECTION"
+                  VALIDATION_PASSED=false
+                fi
+              done
+            fi
+            
+            # Check for at least one Python file
+            PY_FILES=$(find "$PROJECT_DIR" -maxdepth 1 -name "*.py" 2>/dev/null | wc -l)
+            if [ "$PY_FILES" -eq 0 ]; then
+              echo "❌ No Python files found in $PROJECT_DIR"
+              ERRORS="${ERRORS}\n- No Python files found in $PROJECT_DIR"
+              VALIDATION_PASSED=false
+            else
+              echo "✅ Found $PY_FILES Python file(s) in $PROJECT_DIR"
+              
+              # Validate Python syntax
+              for PY_FILE in $PROJECT_DIR/*.py; do
+                if [ -f "$PY_FILE" ]; then
+                  echo "  Checking syntax: $PY_FILE"
+                  if ! python -m py_compile "$PY_FILE" 2>/dev/null; then
+                    echo "❌ Syntax error in $PY_FILE"
+                    ERRORS="${ERRORS}\n- Python syntax error in $PY_FILE"
+                    VALIDATION_PASSED=false
+                  else
+                    echo "  ✅ Syntax valid: $PY_FILE"
+                  fi
+                fi
+              done
+            fi
+          done
+          
+          echo ""
+          if [ "$VALIDATION_PASSED" = true ]; then
+            echo "✅ All validations passed!"
+            echo "validation_result=passed" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Validation failed with errors:"
+            echo -e "$ERRORS"
+            echo "validation_result=failed" >> $GITHUB_OUTPUT
+            echo "errors<<EOF" >> $GITHUB_OUTPUT
+            echo -e "$ERRORS" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+      - name: Comment on PR - Success
+        if: steps.validate.outputs.validation_result == 'passed'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ **PR Validation Passed!**\n\nYour project meets all the requirements:\n- ✅ Project structure is correct\n- ✅ README.md is present and follows the template\n- ✅ Python files have valid syntax\n\nThis PR is ready for review and can be merged!'
+            })
+            
+      - name: Add auto-merge label
+        if: steps.validate.outputs.validation_result == 'passed'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['auto-merge-ready']
+            })
+            
+      - name: Comment on PR - Documentation Only
+        if: steps.validate.outputs.validation_result == 'documentation-only'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '📝 **Documentation Update Detected**\n\nThis PR only modifies documentation files (README.md, CONTRIBUTING.md, etc.).\nNo project validation required.\n\nReady for review!'
+            })
+            
+      - name: Comment on PR - Failure
+        if: failure() && steps.validate.outputs.validation_result == 'failed'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const errors = `${{ steps.validate.outputs.errors }}`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `❌ **PR Validation Failed**\n\nPlease fix the following issues:\n${errors}\n\n📖 Make sure to follow the [Contributing Guidelines](../CONTRIBUTING.md) and use the [README Template](../README_TEMPLATE.md).`
+            })

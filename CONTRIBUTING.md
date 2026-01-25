@@ -18,6 +18,36 @@ Thank you for considering contributing to this project! If you face any issues o
 6. Commit and push your changes to your forked repository.
 7. Create a pull request to submit your project for review.
 
+## Automated PR Validation 🤖
+
+We've enabled GitHub Actions to automatically validate your pull requests! Here's what happens:
+
+### What gets checked:
+- ✅ **Project Structure**: Your project must be in its own directory
+- ✅ **README.md**: Must be present and include required sections:
+  - Description
+  - Frameworks and Modules Used
+  - How to run
+  - Author
+- ✅ **Python Files**: At least one `.py` file with valid Python syntax
+- ✅ **Code Quality**: Python syntax validation for all files
+
+### Automated Workflow:
+1. **Submit PR**: When you create a pull request, automated checks will run
+2. **Validation**: The workflow validates your project structure and code
+3. **Feedback**: You'll receive a comment with the validation results
+4. **Auto-merge**: If all checks pass, your PR will be labeled `auto-merge-ready` and automatically approved
+5. **Merge**: PRs that pass validation can be automatically merged (if repository settings allow)
+
+### If validation fails:
+- Check the PR comments for specific errors
+- Fix the issues in your branch
+- Push the changes - validation will run again automatically
+
+### Documentation Changes:
+- PRs that only modify documentation files (README.md, CONTRIBUTING.md) skip project validation
+- These still need manual review before merging
+
 ## What to contribute
 
 - You can contribute any project you like, as long as it is written in Python.
