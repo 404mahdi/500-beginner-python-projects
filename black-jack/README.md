@@ -7,32 +7,46 @@
 
 ## 🛠️ Description
 
-<!--Remove the below lines and add yours -->
-recreation of the popular game blackjack in python.
+Terminal recreation of the popular game blackjack in python.
 
 
 ## 💻 Frameworks and Modules Used
 
-<!--Remove the below lines and add yours -->
 
-No need to install external libraries. random, os and sys is used
+No need to install external libraries. 'random', 'os' and 'sys' are used
 
 ## 🌟 How to run
-
-<!--Remove the below lines and add yours -->
 
 Go to the directory.
 run `python black_jack.py`
 
+## Features
+- ASCII card rendering 
+- Blackjack detection
+- Basic game functions
+- Ace value adjustment
+
+## 🎲 How to Play
+- Press 'h' to Hit
+- Press 's' to Stand
+- Try to get as close to 21 as possible without going over
+
+
+## Future Features
+Potential features to improve the program
+- Add betting system with balance tracking
+- Implement card splitting
+- Add double down
+- Add win/loss statistics
+- Carry out unit tests 
+
+
 
 ## 📺 Demo
 
-<!--Remove the below lines and add yours -->
 ![image](https://raw.githubusercontent.com/karanveer-lca/500-beginner-python-projects/refs/heads/black-jack/black-jack/preview.png)
 
 
 ## 🤖 Author
-
-<!--Remove the below lines and add yours -->
 
 :octocat: [karanveer-lca](https://github.com/karanveer-lca)
