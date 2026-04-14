@@ -44,4 +44,14 @@ Each project will be organized in its own directory and contains a README.md fil
 - If you find any issues or have suggestions for improvements, please open an issue or submit a pull request.
 - Feel free to contact us if you need any help.
 
+## Beginner Tips 💡
+- Start with simple Python projects before moving to advanced ones
+- Practice consistently to improve problem-solving skills
+- Explore and understand existing code before contributing
+
+## Useful Resources 📚
+- https://cs50.harvard.edu/python/
+- https://www.w3schools.com/python/
+- https://www.geeksforgeeks.org/python-programming-language/
+  
 Happy coding! 🎉
