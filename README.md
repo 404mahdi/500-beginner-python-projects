@@ -19,7 +19,7 @@ We've implemented GitHub Actions to automatically validate pull requests! When y
 
 **No need to manually update the main README** - our bot handles it for you!
 
-See the [GitHub Actions Documentation](./.github/WORKFLOW-README.md) for more details.
+See the [GitHub Actions Documentation](./.github/WORKFLOW_README.md) for more details.
 
 ## [Watch This Video](https://www.youtube.com/watch?v=BNd7mNVpaNk)
 
