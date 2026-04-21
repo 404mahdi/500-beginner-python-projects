@@ -19,7 +19,7 @@ We've implemented GitHub Actions to automatically validate pull requests! When y
 
 **No need to manually update the main README** - our bot handles it for you!
 
-See the [GitHub Actions Documentation](./.github/README.md) for more details.
+See the [GitHub Actions Documentation](./.github/WORKFLOW-README.md) for more details.
 
 ## [Watch This Video](https://www.youtube.com/watch?v=BNd7mNVpaNk)
 
@@ -29,13 +29,14 @@ Each project will be organized in its own directory and contains a README.md fil
 
 ## Projects
 
-| SL  | Project Name                                                                                                                                | Project Description                                                | Author                                            |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------- |
-| 01  | [Dice Roller](https://github.com/404mahdi/500-beginner-python-projects/tree/main/dice-roller)                                               | A simple random dice roller                                        | [404mahdi](https://github.com/404mahdi)           |
-| 02  | [Age Calculator](https://github.com/404mahdi/500-beginner-python-projects/tree/main/age-calculator)                                         | Calculate age in days, months and years also in seconds            | [404mahdi](https://github.com/404mahdi)           |
-| 03  | [Tic Tac Toe](https://github.com/404mahdi/500-beginner-python-projects/tree/main/tic-tac-toe)                                               | A not too convenient tic tac toe game.                             | [404mahdi](https://github.com/404mahdi)           |
-| 04  | [Hospital Emergency Ward Management](https://github.com/404mahdi/500-beginner-python-projects/tree/main/hospital-emergency-ward-management) | A hospital emergency ward management system implemented in python. | [404mahdi](https://github.com/404mahdi)           |
-| 05  | [Black Jack](https://github.com/404mahdi/500-beginner-python-projects/tree/main/black-jack)                                                 | A classic Black Jack card game.                                    | [karanveer-lca](https://github.com/karanveer-lca) |
+| SL  | Project Name                                                                                                                                | Project Description                                                | Author                                                  |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------- |
+| 01  | [Dice Roller](https://github.com/404mahdi/500-beginner-python-projects/tree/main/dice-roller)                                               | A simple random dice roller                                        | [404mahdi](https://github.com/404mahdi)                 |
+| 02  | [Age Calculator](https://github.com/404mahdi/500-beginner-python-projects/tree/main/age-calculator)                                         | Calculate age in days, months and years also in seconds            | [404mahdi](https://github.com/404mahdi)                 |
+| 03  | [Tic Tac Toe](https://github.com/404mahdi/500-beginner-python-projects/tree/main/tic-tac-toe)                                               | A not too convenient tic tac toe game.                             | [404mahdi](https://github.com/404mahdi)                 |
+| 04  | [Hospital Emergency Ward Management](https://github.com/404mahdi/500-beginner-python-projects/tree/main/hospital-emergency-ward-management) | A hospital emergency ward management system implemented in python. | [404mahdi](https://github.com/404mahdi)                 |
+| 05  | [Black Jack](https://github.com/404mahdi/500-beginner-python-projects/tree/main/black-jack)                                                 | A classic Black Jack card game.                                    | [karanveer-lca](https://github.com/karanveer-lca)       |
+| 06  | [Rock Paper Scissors](https://github.com/404mahdi/500-beginner-python-projects/tree/main/rockPaperScissors)                                 | A simple command-line Rock Paper Scissors game.                    | [lieutenant-Rohit](https://github.com/lieutenant-Rohit) |
 
 ## Contributing Guidelines
 
@@ -45,13 +46,15 @@ Each project will be organized in its own directory and contains a README.md fil
 - Feel free to contact us if you need any help.
 
 ## Beginner Tips 💡
+
 - Start with simple Python projects before moving to advanced ones
 - Practice consistently to improve problem-solving skills
 - Explore and understand existing code before contributing
 
 ## Useful Resources 📚
+
 - https://cs50.harvard.edu/python/
 - https://www.w3schools.com/python/
 - https://www.geeksforgeeks.org/python-programming-language/
-  
+
 Happy coding! 🎉
