@@ -1,51 +1,25 @@
-# 🎮 Rock Paper Scissors Game
+# Rock Paper Scissors
 
-A simple command-line **Rock, Paper, Scissors** game built using Python. Play against the computer and test your luck!
+## Description
 
----
+A simple command-line Rock Paper Scissors game where you play one round against the computer.
 
-## 🚀 Features
-
-- User vs Computer gameplay
-- Random computer choices
-- Input validation (no invalid entries allowed)
-- Simple and clean CLI interface
-
----
-
-## 🛠️ Tech Stack
+## Frameworks and Modules Used
 
 - Python 3
-- Built-in `random` module
+- `random` (standard library)
 
----
+## How to run
 
-## 📂 Project Structure
-rockPaperScissors/
-│── game.py
-│── README.md
+1. Open a terminal in this folder.
+2. Run:
 
----
+```bash
+python game.py
+```
 
-## ▶️ How to Run
+3. Type one of: `rock`, `paper`, or `scissors`.
 
-1. Clone the repository:
-   git clone https://github.com/your-username/beginner-python-projects.git
+## Author
 
-2. Navigate to the project folder:
-   cd beginner-python-projects/rockPaperScissors
-
-3. Run the game:
-   python game.py
-
-🎯 How to Play
-
-* Enter one of the following:
-    * rock
-    * paper
-    * scissors
-* The computer will randomly choose its move.
-* The winner is decided based on classic rules:
-    * Rock beats Scissors
-    * Paper beats Rock
-    * Scissors beats Paper
+- lieutenant-Rohit
