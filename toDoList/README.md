@@ -1,5 +1,7 @@
 # 📝 Python To-Do List (CLI App)
 
+## 🛠️ Description
+
 A simple command-line based To-Do List application built using Python. This project allows users to manage their daily tasks efficiently by adding, viewing, and deleting tasks, with persistent storage using a file.
 
 ---
@@ -71,3 +73,6 @@ A simple command-line based To-Do List application built using Python. This proj
 - 🔍 Search tasks  
 - 🎨 Add colored output (using colorama)  
 - 🖥️ Convert to GUI (Tkinter)
+
+## 🤖 Author
+- lieutenant-Rohit
