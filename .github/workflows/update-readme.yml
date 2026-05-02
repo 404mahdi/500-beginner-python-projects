@@ -14,39 +14,39 @@ jobs:
   update-readme:
     runs-on: ubuntu-latest
     if: github.event.pull_request.merged == true
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
-          
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
-          
+          python-version: "3.x"
+
       - name: Get merged changes
         id: get-changes
         run: |
           echo "Getting files changed in merged PR..."
-          
+
           # Get the list of added/modified directories from the merge
           CHANGED_DIRS=$(git diff --name-only HEAD~1 HEAD | grep -v '^README.md$' | grep -v '^CONTRIBUTING.md$' | grep -v '^LICENSE$' | grep -v '^.github/' | grep -v '^README_TEMPLATE.md$' | cut -d'/' -f1 | sort -u | grep -v '^$')
-          
+
           if [ -z "$CHANGED_DIRS" ]; then
             echo "No new project directories found"
             echo "has_changes=false" >> $GITHUB_OUTPUT
             exit 0
           fi
-          
+
           echo "Changed directories: $CHANGED_DIRS"
           echo "changed_dirs<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGED_DIRS" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
           echo "has_changes=true" >> $GITHUB_OUTPUT
-          
+
       - name: Update README with new projects
         if: steps.get-changes.outputs.has_changes == 'true'
         run: |
@@ -55,58 +55,58 @@ jobs:
           import re
           import sys
           from pathlib import Path
-          
-          def extract_project_info(project_dir):
+
+            def extract_project_info(project_dir):
               """Extract project name, description, and author from project README"""
               readme_path = Path(project_dir) / "README.md"
-              
+
               if not readme_path.exists():
-                  return None
-                  
+                return None
+
               with open(readme_path, 'r', encoding='utf-8') as f:
-                  lines = f.readlines()
-              
+                lines = f.readlines()
+
               title = project_dir
               description = "A Python project"
               author_name = ""
               author_link = ""
-              
+
               # Extract title (first # heading)
               for line in lines:
-                  if line.startswith('#') and not line.startswith('##'):
-                      title = line.strip().lstrip('#').strip()
-                      break
-              
+                if line.startswith('#') and not line.startswith('##'):
+                  title = line.strip().lstrip('#').strip()
+                  break
+
               # Extract description - find line after Description heading
               for i, line in enumerate(lines):
-                  if re.search(r'##.*Description', line, re.IGNORECASE):
-                      # Get next non-empty line
-                      for j in range(i+1, len(lines)):
-                          stripped = lines[j].strip()
-                          if stripped and not stripped.startswith('<') and not stripped.startswith('!') and not stripped.startswith('##') and not stripped.startswith('<!--'):
-                              description = stripped
-                              break
+                if re.search(r'##.*Description', line, re.IGNORECASE):
+                  # Get next non-empty line
+                  for j in range(i+1, len(lines)):
+                    stripped = lines[j].strip()
+                    if stripped and not stripped.startswith('<') and not stripped.startswith('!') and not stripped.startswith('##') and not stripped.startswith('<!--'):
+                      description = stripped
                       break
-              
+                  break
+
               # Extract author - look for link format [name](url)
               content = ''.join(lines)
               author_match = re.search(r'##\s+.*Author.*\n\s*\[([^\]]+)\]\(([^\)]+)\)', content, re.DOTALL | re.IGNORECASE)
               if author_match:
-                  author_name = author_match.group(1).strip()
-                  author_link = author_match.group(2).strip()
+                author_name = author_match.group(1).strip()
+                author_link = author_match.group(2).strip()
               else:
-                  # Use PR author as fallback
-                  author_name = "${{ github.event.pull_request.user.login }}"
-                  author_link = "https://github.com/${{ github.event.pull_request.user.login }}"
-              
+                # Use PR author as fallback (no manual curation required)
+                author_name = "${{ github.event.pull_request.user.login }}"
+                author_link = "https://github.com/${{ github.event.pull_request.user.login }}"
+
               return {
-                  'title': title,
-                  'description': description,
-                  'author_name': author_name,
-                  'author_link': author_link,
-                  'dir': project_dir
+                'title': title,
+                'description': description,
+                'author_name': author_name,
+                'author_link': author_link,
+                'dir': project_dir
               }
-          
+
           def get_next_serial_number(readme_content):
               """Get the next available serial number"""
               # Find all serial numbers in the table
@@ -115,13 +115,13 @@ jobs:
                   serial_numbers = [int(s) for s in serial_matches]
                   return max(serial_numbers) + 1
               return 1
-          
+
           def is_project_in_readme(readme_content, project_dir):
               """Check if project is already in README"""
               # Check if the project directory link exists in the README
               pattern = rf'\[.*?\]\(.*?{re.escape(project_dir)}.*?\)'
               return bool(re.search(pattern, readme_content))
-          
+
           def add_project_to_readme(readme_path, project_info):
               """Add project to README table"""
               with open(readme_path, 'r', encoding='utf-8') as f:
@@ -166,11 +166,11 @@ jobs:
               
               print(f"✅ Added {project_info['title']} to README (Serial #{serial_str})")
               return True
-          
+
           # Main execution
           changed_dirs = """${{ steps.get-changes.outputs.changed_dirs }}""".strip().split('\n')
           readme_path = "README.md"
-          
+
           updated = False
           for project_dir in changed_dirs:
               project_dir = project_dir.strip()
@@ -194,44 +194,103 @@ jobs:
               print(f"Description: {project_info['description']}")
               print(f"Author: {project_info['author_name']}")
               
-              # Add to README
-              if add_project_to_readme(readme_path, project_info):
+                # Add to README
+                if add_project_to_readme(readme_path, project_info):
                   updated = True
-          
-          if updated:
+
+            # No author curation required by default; proceed to push changes.
+
+            if updated:
               print("\n✅ README.md updated successfully!")
               sys.exit(0)
-          else:
+            else:
               print("\nℹ️  No updates needed to README.md")
               sys.exit(1)
-          
+
           PYTHON_SCRIPT
-          
-      - name: Commit and push changes
+
+      - name: Commit and push changes (with branch fallback)
+        id: commit-and-push
         if: steps.get-changes.outputs.has_changes == 'true' && success()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -e
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          
+
           git add README.md
-          
+
           if git diff --staged --quiet; then
             echo "No changes to commit"
-          else
-            git commit -m "docs: Auto-update README with new project(s) from PR #${{ github.event.pull_request.number }}"
-            git push
-            
-            echo "✅ README.md updated and pushed to main branch"
+            exit 0
           fi
-          
+
+          COMMIT_MSG="docs: Auto-update README with new project(s) from PR #${{ github.event.pull_request.number }}"
+          git commit -m "$COMMIT_MSG"
+
+          # Attempt to push directly to main; if that fails (branch protection), create a branch+PR.
+          echo "Attempting to push directly to main..."
+          if git push origin main; then
+            echo "✅ README.md updated and pushed to main branch"
+            exit 0
+          fi
+          echo "⚠️ Direct push to main failed (likely branch protection). Will create a PR instead."
+
+          BRANCH="update-readme-pr-${{ github.event.pull_request.number }}"
+          git checkout -b "$BRANCH"
+
+          # Push using authenticated URL
+          AUTH_REPO="https://${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
+          git push "$AUTH_REPO" "$BRANCH" -u
+
+          echo "✅ Pushed README update to branch $BRANCH"
+
+          # Create a PR using GitHub API
+          PR_TITLE="$COMMIT_MSG"
+          DEFAULT_BODY="Auto-generated README update for project(s) added in PR #${{ github.event.pull_request.number }}."
+          if [ -f .author_review_required ]; then
+            REVIEW_LIST=$(sed -n '1,100p' .author_review_required | sed ':a;N;$!ba;s/\n/\n- /g')
+            PR_BODY="$DEFAULT_BODY\n\n⚠️ The following project(s) did not include an explicit author in their README and need manual curation:\n- $REVIEW_LIST\n\nPlease update the author information in the added table row or merge and edit the README as appropriate."
+          else
+            PR_BODY="$DEFAULT_BODY"
+          fi
+
+          api_url="https://api.github.com/repos/${{ github.repository }}/pulls"
+          payload=$( jq -n --arg title "$PR_TITLE" --arg head "$BRANCH" --arg base "main" --arg body "$PR_BODY" '{title: $title, head: $head, base: $base, body: $body}' )
+
+          resp=$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" -X POST -d "$payload" "$api_url")
+          pr_url=$(echo "$resp" | jq -r .html_url)
+          pr_number=$(echo "$resp" | jq -r .number)
+
+          if [ "$pr_url" = "null" ] || [ -z "$pr_url" ]; then
+            echo "⚠️ Failed to create PR via API. Response: $resp"
+            exit 1
+          fi
+
+          echo "✅ Created PR for README update: $pr_url"
+          # Export the PR URL for later steps
+          echo "readme_pr_url=$pr_url" >> $GITHUB_OUTPUT
+
+          # No special labels needed; PR created for the README update if push was blocked.
+
       - name: Comment on PR
         if: steps.get-changes.outputs.has_changes == 'true' && success()
         uses: actions/github-script@v7
         with:
           script: |
+            const readmePrUrl = process.env.README_PR_URL || '';
+            let body = '✅ **README Updated!**\n\nYour project has been automatically added to the main README.md table.\n\nThank you for your contribution! 🎉';
+            if (readmePrUrl && readmePrUrl.length > 0) {
+              body += `\n\n⚠️ We could not push directly to the main branch due to repository protections, so a separate PR was created to update the README: ${readmePrUrl}`;
+              body += `\n\nIf the README update PR needs author curation, it will be labeled \"author-curation-needed\" — please review and update the author information if necessary.`;
+            }
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '✅ **README Updated!**\n\nYour project has been automatically added to the main README.md table.\n\nThank you for your contribution! 🎉'
+              body
             })
+        env:
+          README_PR_URL: ${{ steps.commit-and-push.outputs.readme_pr_url }}

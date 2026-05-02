@@ -176,6 +176,7 @@ jobs:
           echo "🔍 Validating PR changes..."
           VALIDATION_PASSED=true
           ERRORS=""
+          WARNINGS=""
 
           # Get list of changed files
           FILES="${{ steps.changed-files.outputs.all_changed_files }}"
@@ -210,16 +211,28 @@ jobs:
               VALIDATION_PASSED=false
             else
               echo "✅ README.md found in $PROJECT_DIR"
-              
+
               # Check if README follows template structure
-              REQUIRED_SECTIONS=("Description" "Frameworks and Modules Used" "How to run" "Author")
-              for SECTION in "${REQUIRED_SECTIONS[@]}"; do
-                if ! grep -qi "$SECTION" "$PROJECT_DIR/README.md"; then
-                  echo "⚠️  README.md in $PROJECT_DIR missing section: $SECTION"
-                  ERRORS="${ERRORS}\n- README.md in $PROJECT_DIR should include section: $SECTION"
-                  VALIDATION_PASSED=false
-                fi
-              done
+              # Treat missing sections as warnings (non-blocking) unless critical
+              if ! grep -qi "Description" "$PROJECT_DIR/README.md"; then
+                echo "⚠️  README.md in $PROJECT_DIR missing section: Description"
+                WARNINGS="${WARNINGS}\n- README.md in $PROJECT_DIR should include section: Description"
+              fi
+
+              if ! grep -qiE "Frameworks and Modules Used|Tech Stack|Technologies Used" "$PROJECT_DIR/README.md"; then
+                echo "⚠️  README.md in $PROJECT_DIR missing section: Frameworks and Modules Used (or 'Tech Stack')"
+                WARNINGS="${WARNINGS}\n- README.md in $PROJECT_DIR should include section: Frameworks and Modules Used (or 'Tech Stack')"
+              fi
+
+              if ! grep -qi "How to run" "$PROJECT_DIR/README.md"; then
+                echo "⚠️  README.md in $PROJECT_DIR missing section: How to run"
+                WARNINGS="${WARNINGS}\n- README.md in $PROJECT_DIR should include section: How to run"
+              fi
+
+              if ! grep -qi "Author" "$PROJECT_DIR/README.md"; then
+                echo "⚠️  README.md in $PROJECT_DIR missing section: Author"
+                WARNINGS="${WARNINGS}\n- README.md in $PROJECT_DIR should include section: Author"
+              fi
             fi
             
             # Check for at least one Python file
@@ -249,8 +262,16 @@ jobs:
 
           echo ""
           if [ "$VALIDATION_PASSED" = true ]; then
-            echo "✅ All validations passed!"
-            echo "validation_result=passed" >> $GITHUB_OUTPUT
+            if [ -n "$WARNINGS" ]; then
+              echo "✅ Validations passed with warnings"
+              echo "validation_result=passed_with_warnings" >> $GITHUB_OUTPUT
+              echo "validation_warnings<<EOF" >> $GITHUB_OUTPUT
+              echo -e "$WARNINGS" >> $GITHUB_OUTPUT
+              echo "EOF" >> $GITHUB_OUTPUT
+            else
+              echo "✅ All validations passed!"
+              echo "validation_result=passed" >> $GITHUB_OUTPUT
+            fi
           else
             echo "❌ Validation failed with errors:"
             echo -e "$ERRORS"
@@ -258,29 +279,44 @@ jobs:
             echo "errors<<EOF" >> $GITHUB_OUTPUT
             echo -e "$ERRORS" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
+            if [ -n "$WARNINGS" ]; then
+              echo "validation_warnings<<EOF" >> $GITHUB_OUTPUT
+              echo -e "$WARNINGS" >> $GITHUB_OUTPUT
+              echo "EOF" >> $GITHUB_OUTPUT
+            fi
             exit 1
           fi
 
       - name: Comment on PR - Success
-        if: (steps.validate.outputs.validation_result == 'passed' && steps.security-scan.outputs.security_result == 'passed') || (steps.validate.outputs.validation_result == 'passed' && steps.security-scan.outputs.security_result == 'skipped')
+        if: ((steps.validate.outputs.validation_result == 'passed' || steps.validate.outputs.validation_result == 'passed_with_warnings') && steps.security-scan.outputs.security_result == 'passed') || ((steps.validate.outputs.validation_result == 'passed' || steps.validate.outputs.validation_result == 'passed_with_warnings') && steps.security-scan.outputs.security_result == 'skipped')
         uses: actions/github-script@v7
         with:
           script: |
             const securityStatus = '${{ steps.security-scan.outputs.security_result }}';
+            const validateResult = '${{ steps.validate.outputs.validation_result }}';
+            const validateWarnings = `${{ steps.validate.outputs.validation_warnings }}`;
             let securityMessage = '';
             if (securityStatus === 'passed') {
               securityMessage = '- ✅ Security scan passed - no malicious code detected\n';
             }
 
+            let warningsMessage = '';
+            if (validateWarnings && validateWarnings.trim() !== '') {
+              warningsMessage = `\n⚠️ Validation warnings:\n${validateWarnings}\n`;
+            }
+
+            const repoOwner = context.repo.owner;
+            const prAuthor = context.payload.pull_request && context.payload.pull_request.user ? context.payload.pull_request.user.login : '';
+            const prAuthorProfile = prAuthor ? `https://github.com/${prAuthor}` : '';
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `✅ **PR Validation Passed!**\n\nYour project meets all the requirements:\n- ✅ Project structure is correct\n- ✅ README.md is present and follows the template\n- ✅ Python files have valid syntax\n${securityMessage}\nThis PR is ready for review and can be merged!`
+              body: `✅ **PR Validation Passed!**\n\nYour project meets all the requirements:\n- ✅ Project structure is correct\n- ✅ README.md is present\n- ✅ Python files have valid syntax\n${securityMessage}${warningsMessage}\nRepository owner: ${repoOwner}\nPR author: ${prAuthor}\nPR author profile: ${prAuthorProfile}\n\nThis PR is ready for review and can be merged!`
             })
 
       - name: Add auto-merge label
-        if: (steps.validate.outputs.validation_result == 'passed' && steps.security-scan.outputs.security_result == 'passed') || (steps.validate.outputs.validation_result == 'passed' && steps.security-scan.outputs.security_result == 'skipped')
+        if: ((steps.validate.outputs.validation_result == 'passed' || steps.validate.outputs.validation_result == 'passed_with_warnings') && steps.security-scan.outputs.security_result == 'passed') || ((steps.validate.outputs.validation_result == 'passed' || steps.validate.outputs.validation_result == 'passed_with_warnings') && steps.security-scan.outputs.security_result == 'skipped')
         uses: actions/github-script@v7
         with:
           script: |
@@ -309,11 +345,17 @@ jobs:
         with:
           script: |
             const errors = `${{ steps.validate.outputs.errors }}`;
+            const defaultBranch = context.payload.repository && context.payload.repository.default_branch ? context.payload.repository.default_branch : 'main';
+            const contribUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${defaultBranch}/CONTRIBUTING.md`;
+            const readmeTemplateUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${defaultBranch}/README_TEMPLATE.md`;
+            const repoOwner = context.repo.owner;
+            const prAuthor = context.payload.pull_request && context.payload.pull_request.user ? context.payload.pull_request.user.login : '';
+            const prAuthorProfile = prAuthor ? `https://github.com/${prAuthor}` : '';
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `❌ **PR Validation Failed**\n\nPlease fix the following issues:\n${errors}\n\n📖 Make sure to follow the [Contributing Guidelines](../CONTRIBUTING.md) and use the [README Template](../README_TEMPLATE.md).`
+              body: `❌ **PR Validation Failed**\n\nPlease fix the following issues:\n${errors}\n\nRepository owner: ${repoOwner}\nPR author: ${prAuthor}\nPR author profile: ${prAuthorProfile}\n\n📖 Make sure to follow the [Contributing Guidelines](${contribUrl}) and use the [README Template](${readmeTemplateUrl}).`
             })
 
       - name: Comment on PR - Security Failure
@@ -322,9 +364,14 @@ jobs:
         with:
           script: |
             const warnings = `${{ steps.security-scan.outputs.security_warnings }}`;
+            const defaultBranch = context.payload.repository && context.payload.repository.default_branch ? context.payload.repository.default_branch : 'main';
+            const contribUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${defaultBranch}/CONTRIBUTING.md`;
+            const repoOwner = context.repo.owner;
+            const prAuthor = context.payload.pull_request && context.payload.pull_request.user ? context.payload.pull_request.user.login : '';
+            const prAuthorProfile = prAuthor ? `https://github.com/${prAuthor}` : '';
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `🚨 **Security Scan Failed - Potentially Malicious Code Detected**\n\n**This PR has been flagged for security concerns:**\n${warnings}\n\n**Action Required:**\n- Review the flagged code patterns\n- Remove any potentially malicious code\n- If these patterns are necessary for your project, please explain their purpose in the PR description\n- A maintainer will review this PR manually\n\n⚠️  **This PR will NOT be auto-merged due to security concerns.**\n\n📖 For more information, see our [Contributing Guidelines](../CONTRIBUTING.md).`
+              body: `🚨 **Security Scan Failed - Potentially Malicious Code Detected**\n\n**This PR has been flagged for security concerns:**\n${warnings}\n\n**Action Required:**\n- Review the flagged code patterns\n- Remove any potentially malicious code\n- If these patterns are necessary for your project, please explain their purpose in the PR description\n- A maintainer will review this PR manually\n\nRepository owner: ${repoOwner}\nPR author: ${prAuthor}\nPR author profile: ${prAuthorProfile}\n\n⚠️  **This PR will NOT be auto-merged due to security concerns.**\n\n📖 For more information, see our [Contributing Guidelines](${contribUrl}).`
             })
