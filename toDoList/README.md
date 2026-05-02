@@ -14,7 +14,7 @@ A simple command-line based To-Do List application built using Python. This proj
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Frameworks and Modules Used
 
 - Python 3
 - File Handling
